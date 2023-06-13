@@ -1,10 +1,10 @@
-# NBA Gap Cleaning
+# Academic Results
 
-## Estadisticas de los jugadores y jugadoras de la NBA incluidas los salarios
+## Estadisticas de los datos sobre la formación y distintos atributos de estudiantes en EEUU
 
-## Autor
+## Autores
 
-Jose Ignacio Bengoechea Isasa, ignacio.bengis@gmail.com
+Eduardo Ranedo Martínez / Luis Piñuela Galán
 
 ## Acerca de este software
 
@@ -12,13 +12,12 @@ Jose Ignacio Bengoechea Isasa, ignacio.bengis@gmail.com
 * Asignatura: Tipologia y ciclo de vida de los datos.
 * Master de Data Science.
 * [Universitat Oberta of Catalunya.](http://www.uoc.edu/portal/ca/index.html)
-* Consultora: Mireia Calvo Gonzalez
 
 ## Dataset
 
-Puede chequear el dataset en la siguiente dirección:
+El dataset original ha sido obtenido de Kaggle:
+https://www.kaggle.com/datasets/desalegngeb/students-exam-scores
 
-[https://github.com/Bengis/nba-gap-cleaning/blob/master/data/nba_out.csv](https://github.com/Bengis/nba-gap-cleaning/blob/master/data/nba_out.csv)
 
 ## Licencia
 
