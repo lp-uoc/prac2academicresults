@@ -6,6 +6,17 @@
 
 Eduardo Ranedo Martínez / Luis Piñuela Galán
 
+## Descripción
+
+El presente software es la matearilización de la PRAC2, teniendo los puntos siguientes incluidos en el .rmd:
+  1. Integración y selección 
+  2. Limpieza de los datos
+  3. Análisis de los datos 
+  4. Representación de los resultados
+  5. Resolución del problema
+  6. Código
+
+
 ## Acerca de este software
 
 * Este software es parte de la Práctica 2 de la asignatura: "Tipologia y ciclo de vida de los datos".
