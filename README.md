@@ -16,6 +16,14 @@ El presente software es la matearilización de la PRAC2, teniendo los puntos sig
   5. Resolución del problema
   6. Código
 
+## Ficheros contenidos
+**-Code:**
+  1. PRA2-Tipología v4.Rmd: fichero RMD con el código en R
+  2. PRA2_Memoria.docx.pdf: Memoria de la práctica con todas las conclusiones e imágenes explicativas
+  3. PRA2_codigo.pdf: Exportación del .rmd en pdf
+**-Data:**
+  1. datasetpra2.csv: Dataset original extraido de Kaggle para la práctica
+  2. output_datasetpra2.csv: Output obtenido del ejercicio
 
 ## Acerca de este software
 
