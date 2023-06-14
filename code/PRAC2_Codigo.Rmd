@@ -1,0 +1,358 @@
+---
+title: "PRA2 Limpieza y análisis"
+author: "Luis Piñuela y Eduardo Ranedo"
+date: "2023-06-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Primero leemos nuestro dataset y seleccionamos aquellas variables con las que vamos a trabajar. Eliminaremos 3 variables; "X", "LunchType" y "TestPrep".
+
+```{r}
+data <- read.csv("datasetpra2.csv", sep=',')
+
+# Vemos cada una de las variables con el tipo de datos que contienen
+str(data)
+
+# Eliminamos columnas innecesarias
+dataset <- subset(data, select = -c(X, LunchType))
+str(dataset)
+```
+
+#Limpieza de datos
+Vamos a a ver el número de valores NA y vacíos que contiene nuestro dataset, para ver como vamos a tratarlos
+
+```{r}
+colSums(is.na(dataset))
+```
+Hay 1572 valores NA en la variable NrSiblings
+
+```{r}
+colSums(dataset =="")
+```
+Vemos que hay bastantes valores en blanco en diferentes variables.
+Como tenemos una muestra bastante grande, hemos considerado que vamos a eliminar todos los registros que tengan tanto NA como valores en blanco en cualquiera de las variables
+
+```{r}
+dataset <- dataset[!rowSums(is.na(dataset) | dataset == "") > 0, ]
+nrow(dataset)
+```
+Hemos reducido nuestro número de registros de 30641 a 20445.
+
+Vamos a dejar preparadas la variables, de tal manera que posteriormente podamos utilizarlas para realizar el análisis.
+
+Modificamos los valores de la variable "EthnicGroup" para hacerlos más entendibles, ya que actualmente se encuentran en una nomenclatura especial utilizada en Estados Unidos.
+
+```{r}
+equivalencias <- c("group A" = "Americana",
+                     "group B" = "Negra",
+                     "group C" = "Asiática",
+                     "group D" = "Hispana",
+                     "group E" = "Caucásica")
+
+dataset$EthnicGroup <- equivalencias[dataset$EthnicGroup]
+```
+Ahora vamos a dicotomizar algunas de las variables:
+
+- "IsFirstChild": Tomará el valor 0 (sustituye a "yes") en caso de que sea el primer hijo y 1 (sustituye a "no") en caso de que no lo sea
+
+- "NrSiblings": Tomará el valor 0 en caso de que sea hijo único (no es necesario hacer ningún cambio) y 1 en caso de que no lo sea (habrá que asignar 1 a todos los valores distintos de 0)
+
+- "TransportMeans": Tomará el valor 0 en caso de que el desplazamiento sea mediante autobús escolar (school_bus) y tomará valor 1 cuando el desplazamiento sea privado (private)
+
+```{r}
+# Variable IsFirstChild
+dataset$IsFirstChild <- ifelse(dataset$IsFirstChild == "yes", 0, 1)
+
+# Variable NrSiblings
+dataset$NrSiblings <- ifelse(dataset$NrSiblings == 0, 0, 1)
+
+# Variable TransportMeans
+dataset$TransportMeans <- ifelse(dataset$TransportMeans == "school_bus", 0, 1)
+
+```
+Para poder tener una visión general de las notas de los alumnos, vamos a crear una nueva variable que será la media del alumno de las puntuaciones obtenidas en MathScore, ReadingScore y WritingScore 
+```{r}
+dataset$OverallScore <- round((dataset$MathScore + dataset$ReadingScore + dataset$WritingScore) / 3)
+```
+
+
+Podemos observar que los datos de la variable WklyStudyHours tiene unos datos que se han interpretado incorrectamente como fechas, vamos a modificarlo para adaptarlo a los valores correctos.
+```{r}
+dataset$WklyStudyHours <- ifelse(dataset$WklyStudyHours == "5-oct", '5-10', dataset$WklyStudyHours)
+```
+Exportamos los datos a un nuevo fichero
+```{r}
+write.csv(dataset, "output_datasetpra2.csv")
+```
+
+#Analisis de outliers y otras anomalías
+
+Tras preparar los datos vamos a hacer un análisis general de las variables para detectar outliers y otras anomalías.
+
+```{r}
+summary(dataset)
+```
+En principio parece que las variables numéricas son correctas ya que todas las puntuaciones se encuentran en el rango de 0 a 100, por lo que no habría ningún error en sus valores extremos pero estudiemos sus distribuciones.
+
+## Comprobación de Normalidad y homogeneidad de la varianza en Gender
+```{r}
+
+#Histograma para normalidad
+datos <- table(dataset$Gender)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A"),
+         xlim = c(0, 3))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en EthnicGroup
+```{r}
+
+#Histograma para normalidad
+datos <- table(dataset$EthnicGroup)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A"),
+         xlim = c(0, 9))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+
+```
+
+
+## Comprobación de Normalidad y homogeneidad de la varianza en ParentEduc
+```{r}
+#Histograma para normalidad
+datos <- table(dataset$ParentEduc)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A","#7FFF00"),
+         xlim = c(0, 11))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en ParentMaritalStatus
+```{r}
+#Histograma para normalidad
+datos <- table(dataset$ParentMaritalStatus)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A","#7FFF00"),
+         xlim = c(0, 5))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en PracticeSport
+```{r}
+#Histograma para normalidad
+datos <- table(dataset$PracticeSport)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A","#7FFF00"),
+         xlim = c(0, 5))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en IsFirstChild
+```{r}
+#Histograma para normalidad
+datos <- table(dataset$IsFirstChild)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A","#7FFF00"),
+         xlim = c(0, 3))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en NrSiblings
+```{r}
+#Histograma para normalidad
+datos <- table(dataset$NrSiblings)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A","#7FFF00"),
+         xlim = c(0, 3))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en TransportMeans
+```{r}
+#Histograma para normalidad
+datos <- table(dataset$TransportMeans)
+barplot(datos,
+        legend = rownames(datos),
+        col=c("#FAEBD7","aquamarine","#F0FFFF","#5F9EA0","#A52A2A","#7FFF00"),
+         xlim = c(0, 3))
+
+# Test chi-cuadrado para Homogeniedad
+print(chisq.test(datos))
+```
+
+
+
+## Comprobación de Normalidad y homogeneidad de la varianza en MathScore
+```{r}
+boxplot(dataset$MathScore, main="Variable MathScore", col="#FAEBD7")
+hist(data$MathScore, main="Distribución MathScore", col="aquamarine")
+```
+
+
+## Comprobación de Normalidad y homogeneidad de la varianza en ReadingScore
+```{r}
+boxplot(dataset$ReadingScore, main="Variable ReadingScore", col="#FAEBD7")
+hist(data$ReadingScore, main="Distirbución ReadingScore", col="aquamarine")
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en WritingScore
+```{r}
+boxplot(dataset$WritingScore, main="Variable WritingScore", col="#FAEBD7")
+hist(data$WritingScore, main="Distirbución WritingScore", col="aquamarine")
+```
+
+## Comprobación de Normalidad y homogeneidad de la varianza en OverallScore
+```{r}
+boxplot(dataset$OverallScore, main="Variable OverallScore", col="#FAEBD7")
+hist(dataset$OverallScore, main="Distribución OverallScore", col="aquamarine")
+```
+
+
+Podemos ver que la distribución de las variables se parece a la de una normal y que las puntuaciones bajas actúan como outliers. No vemos necesario aplicar ninguna medida respecto a los outliers, ya que parecen ser datos realistas dentro del rango de notas posible.
+
+
+
+##Aplicación de pruebas estadísticas para comparar los grupos de datos.
+Queremos comparar la variable OverallScore con diferentes variables para tratar de entender cuál es el perfil de los estudiantes con mejores notas y los que tienen un peor rendimiento académico.
+
+Primero tendríamos analizar la normalidad de la variable OverallScore. En este caso no podríamos utilizar la función Shapiro.test ya que nuestra muestra tiene mas de 5.000 registros y este test no adminite muestras superiores a esa cifra. Por tanto, tras comprobar en el histograma que la distribución se asemeja a la de una normal y basándonos en el teorema del límite central, que indica que para muestras grandes como la nuestra se seguirá una distribución normal, podemos concluir que la variable OverallScore sigue una distribución normal.
+
+```{r}
+if (!requireNamespace("car", quietly = TRUE)) {install.packages("car")}
+library(car)
+levene_genero <- leveneTest(OverallScore ~ Gender, data = dataset)
+
+print(levene_genero)
+```
+Podemos ver que el p-valor (0.2235) es superior al nivel de significancia (0.05) por lo que aceptamos la hipótesis nula de homocedasticidad.
+
+Viendo que se cumplen los principios de normalidad y homocedasticidad, pasamos a realizar la prueba de t-Student con la variable género
+
+```{r}
+t.test(OverallScore ~ Gender, data = dataset)
+
+```
+El p-valor es menor que el nivel de significancia, lo que muestra que si existen diferencias significativas entre los grupos y que la media de las mujeres es superior al de los hombres.
+
+Ahora queremos saber si existen diferencias significativas entre OverallScore y el grupo étnico del estudiante. Por ello, realizaremos un ANOVA.
+```{r}
+res.aov <- aov(OverallScore ~ EthnicGroup, data = dataset)
+summary(res.aov)
+```
+Podemos ver que el p valor es menor al nivel de significancia por lo que podemos concluir que existen diferencias significativas en la variable OverallScore respecto a EthnicGroup.
+
+
+Vamos a comparar la variable ParentEducation con OverallScore
+```{r}
+res.aov <- aov(OverallScore ~ ParentEduc, data = dataset)
+summary(res.aov)
+```
+Vemos que el p valor es menor al nivel de significancia por lo que podemos concluir que existen diferencias significativas en la variable OverallScore respecto a ParentEduc.
+
+Probamos con la variable ParentMaritalStatus
+```{r}
+res.aov <- aov(OverallScore ~ ParentMaritalStatus, data = dataset)
+summary(res.aov)
+```
+No se han encontrado asociaciones entre el estatus civil de los padres y la variable OverallScore.
+
+Vemos ahora con la variable PracticeSport
+```{r}
+res.aov <- aov(OverallScore ~ PracticeSport, data = dataset)
+summary(res.aov)
+```
+Existe una relación significativa entre la práctica de deporte y el rendimiento académico medido a través de la variable OverallScore.
+
+Ahora queremos saber si el hecho de ser el primero de los hijos puede influir en OverallScore
+
+```{r}
+t.test(OverallScore ~ IsFirstChild, data = dataset)
+```
+La t-student demuestra que no existe significancia entre ser el primer hijo y OverallScore. Veamos si hay significancia entre el número de hermanos y hermanas
+```{r}
+t.test(OverallScore ~ NrSiblings, data = dataset)
+```
+Tampoco hay significancia entre el número de hermanos y OverallScore
+
+```{r}
+t.test(OverallScore ~ TransportMeans, data = dataset)
+```
+El medio de transporte para ir al centro educativo tampoco es significante
+
+
+
+# Modelo de Regresión lineal simple para predecir las notas de los alumnos (3 variables)
+```{r}
+# Creo un dataframe para el cálculo
+dataset_lineal <- data.frame(c(dataset[,c("OverallScore","MathScore", "ReadingScore", "WritingScore")]))
+
+# Proyecto para ver las relaciones
+pairs(dataset_lineal)
+
+# Relacion lineal
+cor(dataset_lineal)
+
+# Ajustar el modelo de regresión lineal
+modelo <- lm(OverallScore ~   + `MathScore` + `ReadingScore` + `WritingScore`, data = dataset_lineal)
+
+# Imprimir los coeficientes del modelo
+print(coef(modelo))
+
+# Realizar predicciones
+
+nuevos_datos <- data.frame(c(dataset[,c("MathScore", "ReadingScore", "WritingScore")]))
+
+predicciones <- predict(modelo, newdata = nuevos_datos)
+head(predicciones)
+
+```
+
+
+
+
+# Modelo de Regresión logística simple para predecir las notas de los alumnos
+```{r}
+# Generamos una columna para definir los sobresalientes como 85-100
+dataset$OveralScore_sobre <- ifelse(dataset$OverallScore >= 85, 1, 0)
+
+# Genero un subset para trajar
+#dataset_logistico <- data.frame(c(dataset[,c("OverallScore","MathScore", "ReadingScore", "WritingScore", "")]))
+
+
+# Generamos el modelo
+modelo_glm <- glm(OveralScore_sobre ~ Gender + EthnicGroup + ParentEduc + PracticeSport, data = dataset)
+
+# Plasmamos los resultados
+summary(modelo_glm)
+
+```
+Del modelo logístico podemos concluir:
+
+-Ser hombre está asociado con una menor probabilidad de tener una puntuación alta en "OveralScore_sobre" en comparación con ser mujer
+- Practicar deporte regularmente está asociado con una mayor probabilidad de tener una puntuación alta en "OveralScore_sobre"
